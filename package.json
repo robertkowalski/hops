@@ -234,5 +234,8 @@
     "lerna": "^4.0.0",
     "lint-staged": "^11.0.0",
     "prettier": "^2.0.0"
+  },
+  "resolutions": {
+    "babel-jest": "^27.0.0"
   }
 }

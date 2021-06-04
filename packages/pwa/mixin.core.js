@@ -12,10 +12,10 @@ class PWAMixin extends Mixin {
       test: /(\.webmanifest|browserconfig\.xml)$/,
       use: [
         {
-          loader: require.resolve('file-loader'),
-          options: {
-            name: getAssetPath(this.config.assetPath, '[name]-[hash:16].[ext]'),
-            emitFile: target === 'build' || target === 'develop',
+          type: 'asset/resource',
+          generator: {
+            filename: getAssetPath('[name]-[contenthash:16].[ext]'),
+            emit: target === 'build' || target === 'develop',
           },
         },
         {

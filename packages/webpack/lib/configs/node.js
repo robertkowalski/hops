@@ -2,8 +2,6 @@ const { dirname, resolve } = require('path');
 const {
   EnvironmentPlugin,
   HotModuleReplacementPlugin,
-  HashedModuleIdsPlugin,
-  NamedModulesPlugin,
   optimize,
 } = require('webpack');
 const { join, trimSlashes } = require('pathifist');
@@ -50,11 +48,9 @@ module.exports = function getConfig(config, name) {
 
   const fileLoaderConfig = {
     exclude: [/\.(?:m?js|html|json)$/],
-    loader: require.resolve('file-loader'),
-    options: {
-      name: getAssetPath('[name]-[hash:16].[ext]'),
-      esModule: false,
-      emitFile: false,
+    type: 'asset/resource',
+    generator: {
+      filename: getAssetPath('[name]-[contenthash:16].[ext]'),
     },
   };
 
@@ -66,12 +62,14 @@ module.exports = function getConfig(config, name) {
         ...fileLoaderConfig,
       },
       {
-        loader: require.resolve('url-loader'),
-        options: {
-          limit: 10000,
-          name: getAssetPath('[name]-[hash:16].[ext]'),
-          emitFile: false,
-          esModule: false,
+        type: 'asset',
+        generator: {
+          filename: getAssetPath('[name]-[contenthash:16].[ext]'),
+        },
+        parser: {
+          dataUrlCondition: {
+            maxSize: 10000,
+          },
         },
       },
     ],
@@ -108,6 +106,10 @@ module.exports = function getConfig(config, name) {
       devtoolModuleFilenameTemplate: (info) =>
         resolve(info.absoluteResourcePath),
     },
+    // fixme
+    cache: {
+      type: 'memory',
+    },
     resolve: {
       modules: getModules(config.rootDir),
       alias: {
@@ -133,10 +135,10 @@ module.exports = function getConfig(config, name) {
     externals: [],
     optimization: {
       minimizer: [],
+      moduleIds: isProduction ? 'deterministic' : 'named',
     },
     plugins: [
       new LimitChunkCountPlugin({ maxChunks: 1 }),
-      new (isProduction ? HashedModuleIdsPlugin : NamedModulesPlugin)(),
       isProduction ? { apply: () => {} } : new HotModuleReplacementPlugin(),
       new EnvironmentPlugin({ NODE_ENV: 'development' }),
     ],

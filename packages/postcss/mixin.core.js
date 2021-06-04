@@ -2,7 +2,7 @@ const postcssImportPlugin = require('postcss-import');
 const postcssPresetEnv = require('postcss-preset-env');
 const postcssNormalizeCharset = require('postcss-normalize-charset');
 const ExtractCSSPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin');
+const CSSMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { Mixin } = require('hops-mixin');
 const { join, trimSlashes } = require('pathifist');
 
@@ -121,8 +121,8 @@ class PostCSSMixin extends Mixin {
     );
 
     webpackConfig.optimization.minimizer.push(
-      new OptimizeCSSPlugin({
-        cssProcessorOptions: {
+      new CSSMinimizerPlugin({
+        minimizerOptions: {
           reduceIdents: { disable: true },
           zindex: { disable: true },
           mergeIdents: { disable: true },

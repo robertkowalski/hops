@@ -1,10 +1,5 @@
 const { dirname, relative } = require('path');
-const {
-  EnvironmentPlugin,
-  HashedModuleIdsPlugin,
-  NamedModulesPlugin,
-  optimize,
-} = require('webpack');
+const { EnvironmentPlugin, optimize } = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const { join, trimSlashes } = require('pathifist');
 const getModules = require('../utils/modules');
@@ -45,10 +40,9 @@ module.exports = function getConfig(config, name) {
 
   const fileLoaderConfig = {
     exclude: [/\.(?:m?js|html|json)$/],
-    loader: require.resolve('file-loader'),
-    options: {
-      name: getAssetPath('[name]-[hash:16].[ext]'),
-      esModule: false,
+    type: 'asset/resource',
+    generator: {
+      filename: getAssetPath('[name]-[contenthash:16].[ext]'),
     },
   };
 
@@ -60,11 +54,14 @@ module.exports = function getConfig(config, name) {
         ...fileLoaderConfig,
       },
       {
-        loader: require.resolve('url-loader'),
-        options: {
-          limit: 10000,
-          name: getAssetPath('[name]-[hash:16].[ext]'),
-          esModule: false,
+        type: 'asset',
+        generator: {
+          filename: getAssetPath('[name]-[contenthash:16].[ext]'),
+        },
+        parser: {
+          dataUrlCondition: {
+            maxSize: 10000,
+          },
         },
       },
     ],
@@ -81,6 +78,8 @@ module.exports = function getConfig(config, name) {
       allLoaderConfigs,
     },
     name,
+    // fixme
+    target: ['web', 'es5'],
     mode: isProduction ? 'production' : 'development',
     bail: isProduction,
     context: config.rootDir,
@@ -93,6 +92,10 @@ module.exports = function getConfig(config, name) {
       chunkFilename: getAssetPath(`${config.name}-[id]-[chunkhash:12].js`),
       devtoolModuleFilenameTemplate: (info) =>
         relative(config.rootDir, info.absoluteResourcePath),
+    },
+    // fixme
+    cache: {
+      type: 'memory',
     },
     resolve: {
       modules: getModules(config.rootDir),
@@ -123,7 +126,6 @@ module.exports = function getConfig(config, name) {
     optimization: {
       splitChunks: {
         chunks: 'all',
-        name: false,
       },
       minimizer: [
         new TerserPlugin({
@@ -133,9 +135,9 @@ module.exports = function getConfig(config, name) {
           },
         }),
       ],
+      moduleIds: isProduction ? 'deterministic' : 'named',
     },
     plugins: [
-      new (isProduction ? HashedModuleIdsPlugin : NamedModulesPlugin)(),
       new ModuleConcatenationPlugin(),
       new EnvironmentPlugin({ NODE_ENV: 'development' }),
     ],
